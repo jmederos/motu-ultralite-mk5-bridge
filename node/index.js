@@ -12,16 +12,14 @@ udpSocket.on('listening', function () {
 });
 
 udpSocket.on('message', function (message) {
-	let advertMessage = null;
-
 	console.log('ipAutoconfig: ' + message);
 	try {
-		advertMessage = JSON.parse(message);
+		const advertMessage = JSON.parse(message);
 		advertMessage.model == "UltraLite-mk5" ? motuData = advertMessage : null;
     } catch (error) {
         return console.error(error);
 	}
-    console.log(`ipAutoconfig: ${advertMessage.name} is reachable at ${motuData.ip} 😎`);
+    console.log(`ipAutoconfig: ${motuData.name} is reachable at ${motuData.ip} 😎`);
 	console.log("ipAutoconfig: Autoconfig done, closing udpSocket")
 	udpSocket.close()
 });
