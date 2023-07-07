@@ -7,21 +7,21 @@ const udpSocket  = dgram.createSocket({ type: 'udp4' });
 const wsRepeater = new WebSocketServer({ port: motuPort });
 
 udpSocket.on('listening', function () {
-	const address = udpSocket.address();
-	console.log('ipAutoconfig: UDP socket listening on ' + address.address + ":" + address.port);
+    const address = udpSocket.address();
+    console.log('ipAutoconfig: UDP socket listening on ' + address.address + ":" + address.port);
 });
 
 udpSocket.on('message', function (message) {
-	console.log('ipAutoconfig: ' + message);
-	try {
-		const advertMessage = JSON.parse(message);
-		advertMessage.model == "UltraLite-mk5" ? motuData = advertMessage : null;
+    console.log('ipAutoconfig: ' + message);
+    try {
+        const advertMessage = JSON.parse(message);
+        advertMessage.model == "UltraLite-mk5" ? motuData = advertMessage : null;
     } catch (error) {
         return console.error(error);
-	}
+    }
     console.log(`ipAutoconfig: ${motuData.name} is reachable at ${motuData.ip} 😎`);
-	console.log("ipAutoconfig: Autoconfig done, closing udpSocket")
-	udpSocket.close()
+    console.log("ipAutoconfig: Autoconfig done, closing udpSocket")
+    udpSocket.close()
 });
 
 udpSocket.bind(motuPort);
