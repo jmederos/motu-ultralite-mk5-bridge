@@ -1,22 +1,50 @@
-import { WebSocketServer } from 'ws';
-import WebSocket from 'ws';
-// Make sure this ip matches the one in your UltraLite mk5:
-const ip = "169.254.43.109";
-const wss = new WebSocketServer({ port: 8080 });
+import { WebSocketServer, WebSocket } from 'ws';
+import dgram from 'node:dgram';
 
-wss.on('connection', function connection(ws2) {
-    console.log("Remote CueMix connected.")
-    const ws = new WebSocket('ws://'+ip+':1280');
-    ws.on('open', function open() {
-        console.log("Connected to Ultralite mk5... bridge started!")
-    });
-    
-    ws.on('message', function(data){
-        ws2.send(data);
-    });
-    
-    ws2.on('message', function message(data) {
-      ws.send(data)
-    });
+let   motuData   = null
+const motuPort   = 1280
+const updSocket  = dgram.createSocket({ type: 'udp4' });
+const wsRepeater = new WebSocketServer({ port: motuPort });
+
+updSocket.on('listening', function () {
+	const address = updSocket.address();
+	console.log('ipAutoconfig: UDP socket listening on ' + address.address + ":" + address.port);
 });
 
+updSocket.on('message', function (message) {
+	let advertMessage = null;
+
+	console.log('ipAutoconfig: ' + message);
+	try {
+		advertMessage = JSON.parse(message);
+		advertMessage.model == "UltraLite-mk5" ? motuData = advertMessage : null;
+    } catch (error) {
+        return console.error(error);
+	}
+    console.log(`ipAutoconfig: ${advertMessage.name} is reachable at ${motuData.ip} 😎`);
+	console.log("ipAutoconfig: Autoconfig done, closing udpSocket")
+	updSocket.close()
+});
+
+updSocket.bind(motuPort);
+
+wsRepeater.on('connection', function connection(clientWebSocket) {
+    console.log("wsRepeater: Client CueMix connected")
+    const motuWebSocket = new WebSocket(`ws://${motuData.ip}:${motuPort}`);
+
+    motuWebSocket.on('open', function open() {
+        console.log(`motuWebSocket: Opened ${motuData.model} - ${motuData.name} - ${motuData.ip}`)
+    });
+    
+    motuWebSocket.on('message', function(data){
+        clientWebSocket.send(data);
+    });
+    
+    clientWebSocket.on('message', function message(data) {
+      motuWebSocket.send(data)
+    });
+
+    clientWebSocket.on('close', function close() {
+        console.log('clientWebSocket: Client disconnected from repeater');
+      });
+});
