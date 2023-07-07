@@ -3,15 +3,15 @@ import dgram from 'node:dgram';
 
 let   motuData   = null
 const motuPort   = 1280
-const updSocket  = dgram.createSocket({ type: 'udp4' });
+const udpSocket  = dgram.createSocket({ type: 'udp4' });
 const wsRepeater = new WebSocketServer({ port: motuPort });
 
-updSocket.on('listening', function () {
-	const address = updSocket.address();
+udpSocket.on('listening', function () {
+	const address = udpSocket.address();
 	console.log('ipAutoconfig: UDP socket listening on ' + address.address + ":" + address.port);
 });
 
-updSocket.on('message', function (message) {
+udpSocket.on('message', function (message) {
 	let advertMessage = null;
 
 	console.log('ipAutoconfig: ' + message);
@@ -23,10 +23,10 @@ updSocket.on('message', function (message) {
 	}
     console.log(`ipAutoconfig: ${advertMessage.name} is reachable at ${motuData.ip} 😎`);
 	console.log("ipAutoconfig: Autoconfig done, closing udpSocket")
-	updSocket.close()
+	udpSocket.close()
 });
 
-updSocket.bind(motuPort);
+udpSocket.bind(motuPort);
 
 wsRepeater.on('connection', function connection(clientWebSocket) {
     console.log("wsRepeater: Client CueMix connected")
